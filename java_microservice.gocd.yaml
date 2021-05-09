@@ -1,5 +1,41 @@
 ---
 format_version: 10
+common:
+  deploy-tasks: &deploy-tasks
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - echo "Deploy on ${ENV_NAME} environment"
+
+  test-tasks: &test-tasks
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - echo "Running tests on ${ENV_NAME}"
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - docker run --network=host -d -t --name api_test_executor_${ENV_NAME} api_test_executor:latest
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - docker exec api_test_executor_${ENV_NAME} cucumber --tags=@${ENV_NAME} --format html --out test-output/report.html
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - docker cp api_test_executor_${ENV_NAME}:/usr/src/api-tests/test-output/report.html report_${ENV_NAME}.html
+    - exec: 
+        command: bash
+        arguments:
+          - -c
+          - docker rm -f api_test_executor_${ENV_NAME}
+
+
 pipelines:
   java_microservice:
     group: microservices
@@ -22,15 +58,14 @@ pipelines:
                       - -c 
                       - echo "Building java app"
       - deploy-dev:
+          environment_variables:
+            ENV_NAME: dev
           jobs:
             deploy:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Deploy to DEV"
+              tasks: *deploy-tasks
       - test-dev:
+          environment_variables:
+            ENV_NAME: dev
           jobs:
             test:
               tasks:
@@ -40,15 +75,14 @@ pipelines:
                       - -c 
                       - echo "Tests execution to DEV"
       - deploy-int:
+          environment_variables:
+            ENV_NAME: int
           jobs:
             deploy:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Deploy to INT"
+              tasks: *deploy-tasks
       - test-int:
+          environment_variables:
+            ENV_NAME: int
           jobs:
             test:
               tasks:
@@ -58,15 +92,14 @@ pipelines:
                       - -c 
                       - echo "Tests execution to INT"
       - deploy-prd:
+          environment_variables:
+            ENV_NAME: prd
           jobs:
             deploy:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Deploy to PRD"
+              tasks: *deploy-tasks
       - test-prd:
+          environment_variables:
+            ENV_NAME: prd
           jobs:
             test:
               tasks:
@@ -75,3 +108,5 @@ pipelines:
                     arguments:
                       - -c 
                       - echo "Tests execution to PRD"
+
+      
