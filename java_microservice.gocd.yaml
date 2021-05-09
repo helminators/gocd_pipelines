@@ -68,12 +68,13 @@ pipelines:
             ENV_NAME: dev
           jobs:
             test:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Tests execution to DEV"
+              artifacts:
+                - build:
+                    source: report_dev.html
+                    destination: test-output
+              tabs:
+                Report: test-output/report_dev.html
+              tasks: *test-tasks
       - deploy-int:
           environment_variables:
             ENV_NAME: int
@@ -85,12 +86,13 @@ pipelines:
             ENV_NAME: int
           jobs:
             test:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Tests execution to INT"
+              artifacts:
+                - build:
+                    source: report_int.html
+                    destination: test-output
+              tabs:
+                Report: test-output/report_int.html
+              tasks: *test-tasks
       - deploy-prd:
           environment_variables:
             ENV_NAME: prd
@@ -102,11 +104,10 @@ pipelines:
             ENV_NAME: prd
           jobs:
             test:
-              tasks:
-                - exec:
-                    command: bash
-                    arguments:
-                      - -c 
-                      - echo "Tests execution to PRD"
-
-      
+              artifacts:
+                - build:
+                    source: report_prd.html
+                    destination: test-output
+              tabs:
+                Report: test-output/report_prd.html
+              tasks: *test-tasks
